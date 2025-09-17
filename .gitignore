@@ -1,0 +1,15 @@
+# PlatformIO / VS Code
+.pio/
+.vscode/
+
+# Local secrets
+include/secrets.h
+
+# System / editor files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.bin
+*.elf
+*.map
