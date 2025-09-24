@@ -1,12 +1,14 @@
 #pragma once
 
 // === Pins ===
-#define RFID_SS_PIN   5
+#define RFID_SDA_PIN   5
+#define RFID_SCK_PIN  18
+#define RFID_MOSI_PIN 23
+#define RFID_MISO_PIN 19
 #define RFID_RST_PIN  22
 #define SERVO_PIN     17
-#define PIR_PIN       27
-#define HALL_PIN_D    26     // digital Hall
-#define HALL_PIN_ADC  34     // analog Hall (ADC1)
+#define PIR_PIN       4
+#define HALL_PIN      35
 
 // === Timings ===
 #define RFID_POLL_MS      100
@@ -18,4 +20,4 @@
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
-#define SERVO_MAX_ANGLE   180
+#define SERVO_MAX_ANGLE   90

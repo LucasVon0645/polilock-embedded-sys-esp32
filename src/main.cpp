@@ -1,7 +1,11 @@
 #include "secrets.h" // It must be first import, it defines BLYNK_AUTH_TOKEN, WIFI_SSID and WIFI_PASS
+#include "config.h"
 #include <Arduino.h>
 #include <WiFi.h>
 #include <BlynkSimpleEsp32.h>
+#include <ESP32Servo.h>
+
+Servo doorServo;
 
 // ---------------------------------------------------------------------------
 // BLYNK_WRITE(V1)
@@ -16,6 +20,11 @@
 // ---------------------------------------------------------------------------
 BLYNK_WRITE(V1) {
   int state = param.asInt(); // 0 = OFF, 1 = ON
+
+  int targetAngle = (state == 1) ? SERVO_MAX_ANGLE : SERVO_MIN_ANGLE;
+
+  doorServo.write(targetAngle);
+
   if (state == 1) {
     Serial.println("🔓 Unlock door!");
   } else {
@@ -32,29 +41,26 @@ BLYNK_WRITE(V0) {
   }
 }
 
+
 void setup() {
-  Serial.begin(115200); // Start serial monitor for debugging
+  Serial.begin(115200);
   delay(100);
 
-  // Connect to Blynk Cloud using credentials from secrets.h
-  // - BLYNK_AUTH_TOKEN identifies this *device* in your Blynk Console
-  // - WIFI_SSID and WIFI_PASS connect to your Wi-Fi router
-  //
-  // While connecting, you’ll see debug logs in the Serial Monitor
-  Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
+  // Configura servo: 50 Hz e faixa de pulso típica
+  doorServo.setPeriodHertz(50);       // servos padrão usam ~50 Hz
+  doorServo.attach(SERVO_PIN, 1000, 2000); // 1000–2000 µs cobre 0–180° no S3003
 
+
+  // Posição inicial
+  doorServo.write(SERVO_MIN_ANGLE);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
   Serial.println("Connecting to Blynk...");
 }
 
 // ---------------------------------------------------------------------------
-// loop()
-// Runs continuously after setup()
-// 
-// IMPORTANT: You *must* call Blynk.run() here to:
-//   - Keep Wi-Fi + Cloud connection alive
-//   - Process incoming messages (like V1 updates)
-//   - Trigger callbacks (like BLYNK_WRITE)
+// Loop
 // ---------------------------------------------------------------------------
 void loop() {
-  Blynk.run(); // keeps the connection alive and processes commands
+  Blynk.run();
 }
