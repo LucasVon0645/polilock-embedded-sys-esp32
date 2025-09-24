@@ -1,36 +1,60 @@
+#include "secrets.h" // It must be first import, it defines BLYNK_AUTH_TOKEN, WIFI_SSID and WIFI_PASS
 #include <Arduino.h>
-#include "io_pins.hpp"
-#include "sensors.hpp"
-#include "rfid.hpp"
-#include "servo_ctrl.hpp"
-#include "cloud_blynk.hpp"
-#include "telemetry.hpp"
-#include "app_fsm.hpp"
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
 
-// === Setup ===
-// This function runs once after reset/power-up
-void setup() {
-  Serial.begin(115200);
-  delay(300);  // give time for serial monitor to connect
-
-  // Initialize subsystems (no logic, just hardware/services setup)
-  io::begin();          // configure GPIOs, SPI, PWM
-  sensors::begin();     // setup PIR / Hall (debounce or thresholds)
-  rfid::begin();        // initialize MFRC522 (SPI)
-  cloud::begin();       // connect Wi-Fi + Blynk (virtual pins)
-  servo::begin();       // set initial servo position
-  fsm::begin();         // initialize application state machine
-  telemetry::begin();   // schedule periodic telemetry tasks
+// ---------------------------------------------------------------------------
+// BLYNK_WRITE(V1)
+// This special function is a *callback* that runs automatically
+// whenever the dashboard widget bound to V1 changes (e.g. user toggles a switch).
+//
+// - "param" holds the value sent by the Blynk Cloud
+// - You can read it as int, float, string: param.asInt(), param.asFloat(), param.asStr()
+// - Example here: a switch widget sends 0 (OFF) or 1 (ON)
+//
+// NOTE: You never call BLYNK_WRITE yourself — Blynk library does it for you.
+// ---------------------------------------------------------------------------
+BLYNK_WRITE(V1) {
+  int state = param.asInt(); // 0 = OFF, 1 = ON
+  if (state == 1) {
+    Serial.println("🔓 Unlock door!");
+  } else {
+    Serial.println("🔒 Lock door automatically!");
+  }
 }
 
-// === Main Loop ===
-// This function runs repeatedly after setup()
-// It acts as a cooperative scheduler
+BLYNK_WRITE(V0) {
+  int state = param.asInt(); // 0 = OFF, 1 = ON
+  if (state == 1) {
+    Serial.println("🟢 System on");
+  } else {
+    Serial.println("🔴 System off");
+  }
+}
+
+void setup() {
+  Serial.begin(115200); // Start serial monitor for debugging
+  delay(100);
+
+  // Connect to Blynk Cloud using credentials from secrets.h
+  // - BLYNK_AUTH_TOKEN identifies this *device* in your Blynk Console
+  // - WIFI_SSID and WIFI_PASS connect to your Wi-Fi router
+  //
+  // While connecting, you’ll see debug logs in the Serial Monitor
+  Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
+
+  Serial.println("Connecting to Blynk...");
+}
+
+// ---------------------------------------------------------------------------
+// loop()
+// Runs continuously after setup()
+// 
+// IMPORTANT: You *must* call Blynk.run() here to:
+//   - Keep Wi-Fi + Cloud connection alive
+//   - Process incoming messages (like V1 updates)
+//   - Trigger callbacks (like BLYNK_WRITE)
+// ---------------------------------------------------------------------------
 void loop() {
-  cloud::run();         // keep Blynk/Wi-Fi alive
-  sensors::poll();      // read PIR / Hall (polling)
-  rfid::poll();         // check if new RFID card is present
-  fsm::tick();          // run application logic (state machine)
-  servo::update();      // refresh servo position if needed
-  telemetry::tick();    // send periodic telemetry
+  Blynk.run(); // keeps the connection alive and processes commands
 }
