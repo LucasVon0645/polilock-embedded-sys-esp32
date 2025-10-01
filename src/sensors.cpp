@@ -77,3 +77,89 @@ float HallSensor::readGauss() const {
 float HallSensor::readMilliTesla() const {
   return readGauss() * 0.1f; // 1 mT = 10 G
 }
+
+// Estado interno (arquivo-local)
+namespace {
+  uint8_t  g_pirPin = PIR_PIN;
+  uint32_t g_timeoutMs = 5000;
+  uint32_t g_stabilizeMs = 5000;
+
+  bool     g_prev = false;           // estado anterior (LOW/HIGH)
+  bool     g_windowActive = false;   // janela aberta após subida?
+  bool     g_notified = false;       // já sinalizou TimedOut nessa janela?
+  uint32_t g_windowStart = 0;        // início da janela (millis)
+  uint32_t g_bootMs = 0;             // marca do boot para fase de estabilização
+
+  bool     g_latchedTimedOut = false; // “latch” para o main consumir (uma vez)
+}
+
+// API
+void PIR_begin(uint8_t pin, uint32_t timeout_ms, uint32_t stabilize_ms) {
+  g_pirPin = pin;
+  g_timeoutMs = timeout_ms;
+  g_stabilizeMs = stabilize_ms;
+
+  pinMode(g_pirPin, INPUT_PULLDOWN);   // a maioria dos pinos do ESP32 tem pulldown
+  g_prev = digitalRead(g_pirPin);
+  g_windowActive = false;
+  g_notified = false;
+  g_windowStart = 0;
+  g_latchedTimedOut = false;
+  g_bootMs = millis();                 // início do período de estabilização
+}
+
+void PIR_setTimeout(uint32_t timeout_ms) { g_timeoutMs = timeout_ms; }
+
+bool PIR_isHigh() { return digitalRead(g_pirPin); }
+
+PirEvent PIR_poll(uint32_t now_ms) {
+  // Ignora leituras durante a estabilização do PIR após energizar
+  if (now_ms - g_bootMs < g_stabilizeMs) {
+    g_prev = digitalRead(g_pirPin);
+    return PirEvent::None;
+  }
+
+  bool cur = digitalRead(g_pirPin);
+
+  // Detecta borda de subida (LOW -> HIGH)
+  if (!g_prev && cur) {
+    g_windowActive = true;
+    g_notified = false;
+    g_windowStart = now_ms;
+    g_prev = cur;
+    return PirEvent::Rising;
+  }
+
+  // Janela ativa? checa timeout e/ou descida
+  if (g_windowActive) {
+    uint32_t elapsed = now_ms - g_windowStart;
+
+    // Timeout atingido e sinal segue HIGH -> evento válido
+    if (!g_notified && elapsed >= g_timeoutMs && cur) {
+      g_notified = true;
+      g_latchedTimedOut = true;   // o main consome via PIR_takeTimedOutEvent()
+      // Mantém janela aberta até cair para LOW para só rearmar no próximo ciclo
+      g_prev = cur;
+      return PirEvent::TimedOut;
+    }
+
+    // Descida antes do timeout -> cancela janela sem evento
+    if (!cur) {
+      g_windowActive = false;
+      g_notified = false;
+      g_prev = cur;
+      return PirEvent::Canceled;
+    }
+  }
+
+  g_prev = cur;
+  return PirEvent::None;
+}
+
+bool PIR_takeTimedOutEvent() {
+  if (g_latchedTimedOut) {
+    g_latchedTimedOut = false;
+    return true;
+  }
+  return false;
+}

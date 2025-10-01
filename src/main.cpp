@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <BlynkSimpleEsp32.h>
 #include "servo_ctrl.hpp"
+#include "sensors.hpp"
 
 // ---------------------------------------------------------------------------
 // BLYNK_WRITE(V0)
@@ -30,6 +31,8 @@ void setup() {
   delay(100);
   setupServo();
   Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
+  // PIR: pino do config.h, timeout = 5000ms, estabilização = 15000ms
+  PIR_begin(PIR_PIN, 5000, 15000);
   Serial.println("Connecting to Blynk...");
 }
 
@@ -38,6 +41,23 @@ void setup() {
 // ---------------------------------------------------------------------------
 void loop() {
   Blynk.run();
+
+  // Poll não-bloqueante (pode chamar em todo loop)
+  PirEvent ev = PIR_poll(millis());
+
+  // Opcional: logar eventos de diagnóstico
+  if (ev == PirEvent::Rising)   Serial.println("[PIR] subida -> janela aberta");
+  if (ev == PirEvent::Canceled) Serial.println("[PIR] descida antes do timeout -> cancelou");
+  if (ev == PirEvent::TimedOut) Serial.println("[PIR] timeout com HIGH -> evento válido");
+
+  // Disparo da notificação (uma vez por ocorrência)
+  if (PIR_takeTimedOutEvent()) {
+    // Blynk IoT (novo): crie no dashboard o Event "presenca_prolongada"
+    Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
+    // Se estiver no Blynk Legacy: use Blynk.notify("...") no lugar do logEvent.
+  }
+
+
 }
 
 // Keep the BLYNK_WRITE macros in the same TU that includes BlynkSimpleEsp32.h
