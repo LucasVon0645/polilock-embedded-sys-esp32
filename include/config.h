@@ -20,4 +20,4 @@
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
-#define SERVO_MAX_ANGLE   90
+#define SERVO_MAX_ANGLE   180
