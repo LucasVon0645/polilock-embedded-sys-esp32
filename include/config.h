@@ -20,6 +20,6 @@
 
 // Sensor Hall Analógico
 // Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
-#define HALL_THRESHOLD 2000
+#define HALL_THRESHOLD 3000
 // Tempo de confirmação em segundos (após borda de subida)
 #define HALL_CONFIRM_SECONDS 3
