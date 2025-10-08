@@ -12,12 +12,14 @@
 
 // === Timings ===
 #define RFID_POLL_MS      100
-#define SENSORS_POLL_MS    50
-#define TELEMETRY_MS     1000
-#define SERVO_UPDATE_MS    50
-#define DEBOUNCE_MS       150
-#define UNLOCK_SECONDS      5
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
 #define SERVO_MAX_ANGLE   180
+
+
+// Sensor Hall Analógico
+// Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
+#define HALL_THRESHOLD 2000
+// Tempo de confirmação em segundos (após borda de subida)
+#define HALL_CONFIRM_SECONDS 3

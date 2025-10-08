@@ -33,6 +33,8 @@ void setup() {
   Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
   // PIR: pino do config.h, timeout = 5000ms, estabilização = 15000ms
   PIR_begin(PIR_PIN, 5000, 15000);
+  // Hall: usa defaults de config.h, mas pode ajustar depois com setters
+  HALL_begin(HALL_PIN, HALL_THRESHOLD, HALL_CONFIRM_SECONDS * 1000UL);
   Serial.println("Connecting to Blynk...");
 }
 
@@ -42,21 +44,42 @@ void setup() {
 void loop() {
   Blynk.run();
 
-  // Poll não-bloqueante (pode chamar em todo loop)
-  PirEvent ev = PIR_poll(millis());
+  // --- PIR ---
+  // Non-blocking polling of PIR
+  PirEvent pir_event = PIR_poll(millis());
 
-  // Opcional: logar eventos de diagnóstico
-  if (ev == PirEvent::Rising)   Serial.println("[PIR] subida -> janela aberta");
-  if (ev == PirEvent::Canceled) Serial.println("[PIR] descida antes do timeout -> cancelou");
-  if (ev == PirEvent::TimedOut) Serial.println("[PIR] timeout com HIGH -> evento válido");
+  // Log PIR events (debug)
+  if (pir_event == PirEvent::Rising)   Serial.println("[PIR] rising: start time window");
+  if (pir_event == PirEvent::Canceled) Serial.println("[PIR] falling before timeout: canceled");
+  if (pir_event == PirEvent::TimedOut) Serial.println("[PIR] timeout with HIGH: valid event");
 
-  // Disparo da notificação (uma vez por ocorrência)
+  // Send notification to Blynk for PIR TimedOut event
   if (PIR_takeTimedOutEvent()) {
     // Blynk IoT (novo): crie no dashboard o Event "presenca_prolongada"
     Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
-    // Se estiver no Blynk Legacy: use Blynk.notify("...") no lugar do logEvent.
   }
 
+  // --- Hall ---
+  // Non-blocking polling of Hall sensor
+  HallEvent hall_event = HALL_poll(millis());
+
+  // Log Hall events (debug)
+  if (hall_event == HallEvent::Rising) Serial.println("[Hall] rising: start time window.");
+  if (hall_event == HallEvent::Canceled) Serial.println("[HALL] falling before timeout: canceled.");
+  if (hall_event == HallEvent::Confirmed) {
+    Serial.print("[HALL] Confirmed: after ");
+    Serial.print(HALL_CONFIRM_SECONDS);
+    Serial.print("s. raw=");
+    Serial.print(HALL_lastRaw());
+    Serial.print(" (threshold=");
+    Serial.print(HALL_THRESHOLD);
+    Serial.println(")");
+  }
+
+  if (HALL_takeConfirmedEvent()) {
+    // Tranca a fechadura
+    Serial.println("Trancamento Automático! 🔒");
+  }
 
 }
 
