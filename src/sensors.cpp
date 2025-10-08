@@ -3,7 +3,7 @@
 // Estado interno (arquivo-local)
 namespace {
   uint8_t  g_pirPin = PIR_PIN;
-  uint32_t g_timeoutMs = 5000;
+  uint32_t g_timeoutMs = 30000;  // timeout padrão 30s
   uint32_t g_stabilizeMs = 5000;
 
   bool     g_prev = false;           // estado anterior (LOW/HIGH)
