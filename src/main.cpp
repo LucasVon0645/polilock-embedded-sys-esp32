@@ -111,3 +111,8 @@ void loop() {
 
 // Keep the BLYNK_WRITE macros in the same TU that includes BlynkSimpleEsp32.h
 BLYNK_WRITE(V1) { onV1Write(param); }
+
+BLYNK_CONNECTED() {
+  // Pull the last V1 value from the server; this will call BLYNK_WRITE(V1)
+  Blynk.syncVirtual(V1);
+}
