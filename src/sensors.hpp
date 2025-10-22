@@ -50,4 +50,4 @@ bool HALL_takeConfirmedEvent();
 
 // Utilitários
 int  HALL_lastRaw();           // última leitura ADC
-bool HALL_isAboveThreshold();  // acima do limiar?
+bool HALL_isAboveThreshold();  // acima do limiar
