@@ -5,6 +5,7 @@
 #include <BlynkSimpleEsp32.h>
 #include "servo_ctrl.hpp"
 #include "sensors.hpp"
+#include "rfid.hpp"
 
 // ---------------------------------------------------------------------------
 // BLYNK_WRITE(V0)
@@ -17,6 +18,8 @@
 //
 // NOTE: You never call BLYNK_WRITE yourself — Blynk library does it for you.
 // ---------------------------------------------------------------------------
+RFIDReader rfid(RFID_SS_PIN, RFID_RST_PIN);
+
 BLYNK_WRITE(V0) {
   int state = param.asInt(); // 0 = OFF, 1 = ON
   if (state == 1) {
@@ -36,6 +39,8 @@ void setup() {
   // Hall: usa defaults de config.h, mas pode ajustar depois com setters
   HALL_begin(HALL_PIN, HALL_THRESHOLD, HALL_CONFIRM_SECONDS * 1000UL);
   Serial.println("Connecting to Blynk...");
+
+  rfid.begin();
 }
 
 // ---------------------------------------------------------------------------
@@ -91,6 +96,12 @@ void loop() {
     Serial.print(HALL_isAboveThreshold() ? "YES" : "no");
     Serial.print(" | PIR=");
     Serial.println(PIR_isHigh() ? "HIGH" : "low");
+  }
+
+  if (rfid.isCardPresent()) {
+    String uid = rfid.readCardUID();
+    Serial.print("Card UID: ");
+    Serial.println(uid);
   }
 
 }

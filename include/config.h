@@ -10,6 +10,9 @@
 #define PIR_PIN       4
 #define HALL_PIN      35
 
+#define RFID_SS_PIN 5
+#define RFID_RST_PIN 22
+
 // === Timings ===
 #define RFID_POLL_MS      100
 
