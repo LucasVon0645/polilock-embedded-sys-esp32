@@ -102,15 +102,14 @@ void poll(uint32_t now_ms) {
     } else {
       // Expirou a janela
       if (HALL_isAboveThreshold()) {
-      // Porta continuou fechada -> re-tranca
-      goLocked();
-      Serial.println(F("[LOCK] Auto-relock: destrancou e não abriu em Y segundos"));
+        // Porta continuou fechada -> re-tranca
+        goLocked();
+        Serial.printf("[LOCK] Auto-relock: destrancou e não abriu em %d segundos\n", g_unlockForgotMs / 1000);
       } else {
-      // Porta já não está fechada; deixa destrancado
-      goUnlocked();
+        // Porta já não está fechada; deixa destrancado
+        goUnlocked();
       }
     }
-  }
 }
 
 void cmdUnlock(uint32_t now_ms) {
