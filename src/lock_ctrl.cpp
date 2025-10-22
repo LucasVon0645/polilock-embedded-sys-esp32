@@ -7,9 +7,12 @@ namespace {
   StateLock     g_state = StateLock::LOCKED;
   uint32_t  g_unlockForgotMs = UNLOCK_FORGOT_MS;
   uint32_t  g_openDebounceMs = OPEN_DEBOUNCE_LOCK_MS;
+  uint32_t  t_openStart = 0;
   bool h_latchedLockEvent = false;
   bool h_latchedUnlockEvent = false;
   bool h_latchedFailedLock = false;
+  bool h_latchedOpenTooLong = false;
+  bool trackingOpen = false;
 
   // timers
   uint32_t  t_deadlineUnlockForgot = 0; // quando expira a janela Y
@@ -24,6 +27,7 @@ namespace {
     SERVO_lock();
     g_state = StateLock::LOCKED;
     inOpenDebounce = false;
+    trackingOpen = false;
     h_latchedLockEvent = true;
     Serial.println(F("[LOCK] -> LOCKED"));
   }
@@ -33,6 +37,7 @@ namespace {
     g_state = StateLock::UNLOCKED_WAIT_OPEN;
     t_deadlineUnlockForgot = now_ms + g_unlockForgotMs;
     inOpenDebounce = false;
+    trackingOpen = false;
     h_latchedUnlockEvent = true;
     Serial.println(F("[LOCK] -> UNLOCKED_WAIT_OPEN (aguardando abertura)"));
   }
@@ -111,6 +116,33 @@ void poll(uint32_t now_ms) {
       }
     }
   }
+  
+  // 3) Timeout: door kept OPEN for > OPEN_TOO_LONG_MS while UNLOCKED
+  if (g_state == StateLock::UNLOCKED) {
+    bool magnet_close = HALL_isAboveThreshold(); // true => door closed
+
+    if (!magnet_close) {
+      // Door is open: start or continue timing
+      if (!trackingOpen) {
+        trackingOpen = true;
+        t_openStart = now_ms;
+        // Serial.println(F("[LOCK] open timing started"));
+      } else {
+        if (elapsedSince(t_openStart, OPEN_TOO_LONG_MS)) {
+          // One-shot latch (don’t spam while still open)
+          if (!h_latchedOpenTooLong) {
+            h_latchedOpenTooLong = true;
+            Serial.printf("[LOCK] Door open > %ds\n", OPEN_TOO_LONG_MS / 1000);
+          }
+          // Keep trackingOpen true so we only re-arm once it closes.
+        }
+      }
+    } else {
+      // Door closed: reset open timing and allow a new future latch
+      trackingOpen = false;
+      // Do not clear the latched flag here; the consumer (main.cpp) will take it.
+    }
+  }
 }
 
 void cmdUnlock(uint32_t now_ms) {
@@ -171,5 +203,11 @@ bool LOCK_takeLockEvent() {
 bool LOCK_takeUnlockEvent() {
   bool latched = LockCtrl::h_latchedUnlockEvent;
   LockCtrl::h_latchedUnlockEvent = false;
+  return latched;
+}
+
+bool LOCK_takeOpenTooLongEvent() {
+  bool latched = LockCtrl::h_latchedOpenTooLong;
+  LockCtrl::h_latchedOpenTooLong = false;
   return latched;
 }

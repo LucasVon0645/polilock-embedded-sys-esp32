@@ -45,3 +45,5 @@ bool LOCK_takeFailedLockEvent();
 bool LOCK_takeLockEvent();
 
 bool LOCK_takeUnlockEvent();
+
+bool LOCK_takeOpenTooLongEvent();

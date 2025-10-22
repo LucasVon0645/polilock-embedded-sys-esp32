@@ -1,5 +1,8 @@
 #pragma once
 
+#define V_UNLOCKED 1
+#define V_LOCKED 0
+
 // === Pins ===
 #define RFID_SDA_PIN   5
 #define RFID_SCK_PIN  18
@@ -14,20 +17,17 @@
 #define RFID_RST_PIN 22
 
 // === Timings ===
-#define RFID_POLL_MS      100
+// Tempo de confirmação em segundos (após borda de subida)
+#define HALL_CONFIRM_SECONDS  3
+#define UNLOCK_FORGOT_MS      10000  // 10 segundos
+#define OPEN_DEBOUNCE_LOCK_MS 200
+#define RFID_POLL_MS          100
+#define OPEN_TOO_LONG_MS      30000   // 30 seconds
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
 #define SERVO_MAX_ANGLE   180
 
-
-// Sensor Hall Analógico
+// === Hall Sensor ===
 // Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
 #define HALL_THRESHOLD 2500
-// Tempo de confirmação em segundos (após borda de subida)
-#define HALL_CONFIRM_SECONDS 3
-#define UNLOCK_FORGOT_MS 10000  // 10 segundos
-#define OPEN_DEBOUNCE_LOCK_MS 200
-
-#define V_UNLOCKED 1
-#define V_LOCKED 0

@@ -70,6 +70,12 @@ void loop() {
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 
+  if (LOCK_takeOpenTooLongEvent()) {
+    // Create an Event in Blynk (e.g., "porta_aberta_longo_tempo") in your template
+    String msg = String("A porta ficou aberta por mais de ") + (OPEN_TOO_LONG_MS / 1000) + " segundos.";
+    Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
+  }
+
   // --- Hall ---
   // Non-blocking polling of Hall sensor
   HallEvent hall_event = HALL_poll(millis());
