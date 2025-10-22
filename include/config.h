@@ -18,7 +18,7 @@
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
-#define SERVO_MAX_ANGLE   180
+#define SERVO_MAX_ANGLE    180
 
 
 // Sensor Hall Analógico

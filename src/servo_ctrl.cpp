@@ -7,7 +7,7 @@ Servo doorServo;
 
 void setupServo() {
   doorServo.setPeriodHertz(50);
-  doorServo.attach(SERVO_PIN, 1000, 2000);
+  doorServo.attach(SERVO_PIN, 900, 2100);
   doorServo.write(SERVO_MIN_ANGLE);
 }
 
