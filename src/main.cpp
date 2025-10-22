@@ -9,6 +9,8 @@
 #include "blynk.hpp"
 #include "rfid.hpp"
 
+RFIDReader rfid(RFID_SS_PIN, RFID_RST_PIN);
+
 void setup() {
   Serial.begin(115200);
   delay(100);
