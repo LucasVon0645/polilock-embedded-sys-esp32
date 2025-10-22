@@ -7,6 +7,7 @@
 #include "sensors.hpp"
 #include "lock_ctrl.hpp"
 #include "blynk.hpp"
+#include "rfid.hpp"
 
 void setup() {
   Serial.begin(115200);
@@ -30,6 +31,8 @@ void setup() {
   );
   Serial.print(F("[BOOT] Estado inicial: "));
   Serial.println(LockCtrl::stateName(LockCtrl::state()));
+
+  rfid.begin();
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +91,12 @@ void loop() {
   //   Serial.print(" | PIR=");
   //   Serial.println(PIR_isHigh() ? "HIGH" : "low");
   // }
+
+  if (rfid.isCardPresent()) {
+    String uid = rfid.readCardUID();
+    Serial.print("Card UID: ");
+    Serial.println(uid);
+  }
 
 }
 

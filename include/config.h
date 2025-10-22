@@ -10,6 +10,9 @@
 #define PIR_PIN       4
 #define HALL_PIN      35
 
+#define RFID_SS_PIN 5
+#define RFID_RST_PIN 22
+
 // === Timings ===
 #define RFID_POLL_MS      100
 
@@ -20,7 +23,7 @@
 
 // Sensor Hall Analógico
 // Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
-#define HALL_THRESHOLD 3000
+#define HALL_THRESHOLD 2500
 // Tempo de confirmação em segundos (após borda de subida)
 #define HALL_CONFIRM_SECONDS 3
 #define UNLOCK_FORGOT_SECONDS 10
