@@ -82,16 +82,16 @@ void loop() {
   }
 
   // (opcional) telemetria leve
-  static uint32_t lastPrint = 0;
-  if (millis() - lastPrint >= 500) {
-    lastPrint = millis();
-    Serial.print("HALL raw=");
-    Serial.print(HALL_lastRaw());
-    Serial.print(" above=");
-    Serial.print(HALL_isAboveThreshold() ? "YES" : "no");
-    Serial.print(" | PIR=");
-    Serial.println(PIR_isHigh() ? "HIGH" : "low");
-  }
+  // static uint32_t lastPrint = 0;
+  // if (millis() - lastPrint >= 500) {
+  //   lastPrint = millis();
+  //   Serial.print("HALL raw=");
+  //   Serial.print(HALL_lastRaw());
+  //   Serial.print(" above=");
+  //   Serial.print(HALL_isAboveThreshold() ? "YES" : "no");
+  //   Serial.print(" | PIR=");
+  //   Serial.println(PIR_isHigh() ? "HIGH" : "low");
+  // }
 
 }
 
