@@ -110,6 +110,7 @@ void poll(uint32_t now_ms) {
         goUnlocked();
       }
     }
+  }
 }
 
 void cmdUnlock(uint32_t now_ms) {
