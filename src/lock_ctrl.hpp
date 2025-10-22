@@ -10,8 +10,8 @@
 #define OPEN_DEBOUNCE_LOCK_MS 200
 #endif
 
-#ifndef UNLOCK_FORGOT_SECONDS  // tempo padrão para esquecer destrancamento automático
-#define UNLOCK_FORGOT_SECONDS 10
+#ifndef UNLOCK_FORGOT_MS  // tempo padrão para esquecer destrancamento automático
+#define UNLOCK_FORGOT_MS 10000
 #endif
 
 namespace LockCtrl {
@@ -22,7 +22,7 @@ enum class StateLock {
   UNLOCKED            // destrancado e já houve gesto de abertura
 };
 
-void begin(uint32_t unlockForgotMs = UNLOCK_FORGOT_SECONDS * 1000UL,
+void begin(uint32_t unlockForgotMs = UNLOCK_FORGOT_MS,
            uint32_t openDebounceMs = OPEN_DEBOUNCE_LOCK_MS);
 
 // chama no loop (não bloqueante)

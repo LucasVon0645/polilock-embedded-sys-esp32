@@ -28,7 +28,7 @@ void setup() {
 
   // Lock controller
   LockCtrl::begin(
-    UNLOCK_FORGOT_SECONDS * 1000UL, // Y
+    UNLOCK_FORGOT_MS, // Y
     OPEN_DEBOUNCE_LOCK_MS                // debounce de abertura
   );
   Serial.print(F("[BOOT] Estado inicial: "));

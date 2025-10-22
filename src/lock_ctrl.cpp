@@ -5,7 +5,7 @@ namespace LockCtrl {
 
 namespace {
   StateLock     g_state = StateLock::LOCKED;
-  uint32_t  g_unlockForgotMs = UNLOCK_FORGOT_SECONDS * 1000UL;
+  uint32_t  g_unlockForgotMs = UNLOCK_FORGOT_MS;
   uint32_t  g_openDebounceMs = OPEN_DEBOUNCE_LOCK_MS;
   bool h_latchedLockEvent = false;
   bool h_latchedUnlockEvent = false;
@@ -96,17 +96,18 @@ void poll(uint32_t now_ms) {
       }
     }
 
-    if ( (uint32_t)(now_ms - t_deadlineUnlockForgot) < (uint32_t)0x80000000UL ) {
-      // not yet expired (comparação padrão), então só segue
+    // prazo Y ainda não expirou? (comparação de tempo mais clara e segura contra overflow)
+    if ((int32_t)(t_deadlineUnlockForgot - now_ms) > 0) {
+      // ainda dentro da janela, então não expirou
     } else {
       // Expirou a janela
       if (HALL_isAboveThreshold()) {
-        // Porta continuou fechada -> re-tranca
-        goLocked();
-        Serial.println(F("[LOCK] Auto-relock: destrancou e não abriu em Y segundos"));
+      // Porta continuou fechada -> re-tranca
+      goLocked();
+      Serial.println(F("[LOCK] Auto-relock: destrancou e não abriu em Y segundos"));
       } else {
-        // Porta já não está fechada; deixa destrancado
-        goUnlocked();
+      // Porta já não está fechada; deixa destrancado
+      goUnlocked();
       }
     }
   }

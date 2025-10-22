@@ -26,7 +26,7 @@
 #define HALL_THRESHOLD 2500
 // Tempo de confirmação em segundos (após borda de subida)
 #define HALL_CONFIRM_SECONDS 3
-#define UNLOCK_FORGOT_SECONDS 10
+#define UNLOCK_FORGOT_MS 10000  // 10 segundos
 #define OPEN_DEBOUNCE_LOCK_MS 200
 
 #define V_UNLOCKED 1
