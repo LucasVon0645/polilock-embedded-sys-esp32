@@ -26,7 +26,7 @@
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
-#define SERVO_MAX_ANGLE   180
+#define SERVO_MAX_ANGLE    180
 
 // === Hall Sensor ===
 // Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
