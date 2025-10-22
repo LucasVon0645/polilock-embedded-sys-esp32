@@ -59,15 +59,15 @@ void loop() {
   }
 
   if (LOCK_takeLockEvent()) {
-    Blynk.virtualWrite(V1, 1); // Update V1 to unlocked
+    Blynk.virtualWrite(V1, V_LOCKED); // Update V1 to locked
   }
   if (LOCK_takeUnlockEvent()) {
-    Blynk.virtualWrite(V1, 0); // Update V1 to locked
+    Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 to unlocked
   }
 
   if (LOCK_takeFailedLockEvent()) {
     Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
-    Blynk.virtualWrite(V1, 1); // Update V1 back to unlocked
+    Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 
   // --- Hall ---

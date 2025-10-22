@@ -1,8 +1,9 @@
 #include "blynk.hpp"
+#include "config.h"
 
 void onV1Write(const BlynkParam& param) {
   int v = param.asInt();
-  if (v == 1) {
+  if (v == V_UNLOCKED) {
     LockCtrl::cmdUnlock(millis());
     Serial.println(F("[CMD] unlock 🔓"));
   } else {
