@@ -41,3 +41,7 @@ const __FlashStringHelper* stateName(StateLock s);
 } // namespace LockCtrl
 
 bool LOCK_takeFailedLockEvent();
+
+bool LOCK_takeLockEvent();
+
+bool LOCK_takeUnlockEvent();

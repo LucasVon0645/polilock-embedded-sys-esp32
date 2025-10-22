@@ -58,9 +58,16 @@ void loop() {
     Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
   }
 
+  if (LOCK_takeLockEvent()) {
+    Blynk.virtualWrite(V1, 1); // Update V1 to unlocked
+  }
+  if (LOCK_takeUnlockEvent()) {
+    Blynk.virtualWrite(V1, 0); // Update V1 to locked
+  }
+
   if (LOCK_takeFailedLockEvent()) {
     Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
-    Blynk.virtualWrite(V1, 1); // Update V1 back to locked
+    Blynk.virtualWrite(V1, 1); // Update V1 back to unlocked
   }
 
   // --- Hall ---

@@ -7,6 +7,8 @@ namespace {
   StateLock     g_state = StateLock::LOCKED;
   uint32_t  g_unlockForgotMs = UNLOCK_FORGOT_SECONDS * 1000UL;
   uint32_t  g_openDebounceMs = OPEN_DEBOUNCE_LOCK_MS;
+  bool h_latchedLockEvent = false;
+  bool h_latchedUnlockEvent = false;
   bool h_latchedFailedLock = false;
 
   // timers
@@ -22,6 +24,7 @@ namespace {
     SERVO_lock();
     g_state = StateLock::LOCKED;
     inOpenDebounce = false;
+    h_latchedLockEvent = true;
     Serial.println(F("[LOCK] -> LOCKED"));
   }
 
@@ -30,6 +33,7 @@ namespace {
     g_state = StateLock::UNLOCKED_WAIT_OPEN;
     t_deadlineUnlockForgot = now_ms + g_unlockForgotMs;
     inOpenDebounce = false;
+    h_latchedUnlockEvent = true;
     Serial.println(F("[LOCK] -> UNLOCKED_WAIT_OPEN (aguardando abertura)"));
   }
 
@@ -154,5 +158,17 @@ const __FlashStringHelper* stateName(StateLock s) {
 bool LOCK_takeFailedLockEvent() {
   bool latched = LockCtrl::h_latchedFailedLock;
   LockCtrl::h_latchedFailedLock = false;
+  return latched;
+}
+
+bool LOCK_takeLockEvent() {
+  bool latched = LockCtrl::h_latchedLockEvent;
+  LockCtrl::h_latchedLockEvent = false;
+  return latched;
+}
+
+bool LOCK_takeUnlockEvent() {
+  bool latched = LockCtrl::h_latchedUnlockEvent;
+  LockCtrl::h_latchedUnlockEvent = false;
   return latched;
 }
