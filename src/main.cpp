@@ -55,7 +55,6 @@ void loop() {
   // Send notification to Blynk for PIR TimedOut event
   if (PIR_takeTimedOutEvent()) {
     // Blynk IoT (novo): crie no dashboard o Event "presenca_prolongada"
-    // Log commented out to avoid spamming during tests
     // Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
   }
 
@@ -67,14 +66,14 @@ void loop() {
   }
 
   if (LOCK_takeFailedLockEvent()) {
-    // Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
+    Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 
   if (LOCK_takeOpenTooLongEvent()) {
     // Create an Event in Blynk (e.g., "porta_aberta_longo_tempo") in your template
     String msg = String("A porta ficou aberta por mais de ") + (OPEN_TOO_LONG_MS / 1000) + " segundos.";
-    // Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
+    Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
   }
 
   // --- Hall ---
