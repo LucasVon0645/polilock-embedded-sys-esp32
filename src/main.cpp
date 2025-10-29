@@ -66,7 +66,7 @@ void loop() {
   }
 
   if (LOCK_takeFailedLockEvent()) {
-    Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
+    Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento não foi possível.");
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 

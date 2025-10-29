@@ -94,7 +94,7 @@ void poll(uint32_t now_ms) {
       // estamos no debounce; confirma "abriu" se continua abaixo por OPEN_DEBOUNCE_LOCK_MS
       if (!magnet_close && elapsedSince(t_openDebounceStart, g_openDebounceMs)) {
         goUnlocked(); // cancelamos a janela Y
-        Serial.println(F("[LOCK] abertura confirmada: cancelado auto-relock Y"));
+        Serial.println(F("[LOCK] abertura confirmada: cancelado auto relock"));
       }
       // se o sinal voltou a acima antes de vencer o debounce, zera o processo
       if (magnet_close) {
