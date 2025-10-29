@@ -54,8 +54,7 @@ void loop() {
 
   // Send notification to Blynk for PIR TimedOut event
   if (PIR_takeTimedOutEvent()) {
-    // Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
-    Serial.println("[PIR] Notificação enviada para Blynk: presença prolongada.");
+    Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
   }
 
   if (LOCK_takeLockEvent()) {
