@@ -107,11 +107,7 @@ void loop() {
   //   Serial.println(PIR_isHigh() ? "HIGH" : "low");
   // }
 
-  if (rfid.isCardPresent()) {
-    String uid = rfid.readCardUID();
-    Serial.print("Card UID: ");
-    Serial.println(uid);
-  }
+  rfid.pool();
 
 }
 
