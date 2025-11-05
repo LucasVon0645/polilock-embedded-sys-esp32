@@ -113,6 +113,7 @@ void RFIDReader::pool() {
       pendingMsgV3 = "Nova tag CADASTRADA: " + uid;
     }
     // encerra janela após a primeira leitura útil
+    delay(1000); // wait a bit before canceling enrollment
     cancelEnroll();
     return;
   }
