@@ -71,6 +71,24 @@ void RFIDReader::cancelEnroll() {
   pendingMsgV3 = "Modo cadastro DESATIVADO.";
 }
 
+void RFIDReader::clearAllUIDs() {
+  // limpa memória em RAM
+  authorizedUIDs.clear();
+
+  // limpa persistência
+  if (prefs.begin(PREFS_NS, false)) {
+    prefs.putString(PREFS_KEY, ""); // nada salvo
+    prefs.end();
+  }
+
+  // garante que não ficamos em modo cadastro
+  enrollMode = false;
+  h_latchedCancelEnrollEvent = true; // main vai desligar o V2
+
+  // mensagem para o app (consumida no loop do main)
+  pendingMsgV3 = "Todas as tags foram APAGADAS.";
+}
+
 void RFIDReader::pool() {
   // expira janela
   if (enrollMode && millis() > enrollUntilMs) {

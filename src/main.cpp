@@ -132,6 +132,8 @@ BLYNK_WRITE(V1) { onV1Write(param); }
 // ---- NOVO: botão para cadastro em V2 ----
 BLYNK_WRITE(V2) { onV2Write(param, rfid); }
 
+BLYNK_WRITE(V4) { onV4Write(param, rfid); }
+
 BLYNK_CONNECTED() {
   // Pull the last V1 value from the server; this will call BLYNK_WRITE(V1)
   Blynk.syncVirtual(V1);

@@ -7,3 +7,5 @@
 void onV1Write(const BlynkParam& param);
 
 void onV2Write(const BlynkParam& param, RFIDReader& rfid);
+
+void onV4Write(const BlynkParam& param, RFIDReader& rfid);

@@ -20,3 +20,10 @@ void onV2Write(const BlynkParam& param, RFIDReader& rfid) {
     rfid.cancelEnroll();
   }
 }
+
+void onV4Write(const BlynkParam& param, RFIDReader& rfid) {
+  // modo Push: vem 1 no pressionar, 0 no soltar
+  if (param.asInt() == 1) {
+    rfid.clearAllUIDs();
+  }
+}
