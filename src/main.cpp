@@ -22,6 +22,9 @@ void setup() {
   Serial.println("Connecting to Blynk...");
   Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
 
+  // Correct initial states on startup
+  Blynk.virtualWrite(V2, 0); // Update RFID to read mode
+
   // PIR: pino do config.h, timeout = 5000ms, estabilização = 15000ms
   PIR_begin(PIR_PIN, 5000, 15000);
 
@@ -33,6 +36,7 @@ void setup() {
     UNLOCK_FORGOT_MS, // Y
     OPEN_DEBOUNCE_LOCK_MS                // debounce de abertura
   );
+
   Serial.print(F("[BOOT] Estado inicial: "));
   Serial.println(LockCtrl::stateName(LockCtrl::state()));
 
