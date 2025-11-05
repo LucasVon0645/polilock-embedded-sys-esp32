@@ -27,7 +27,7 @@ void begin(uint8_t pin, uint32_t timeout_ms, uint32_t stabilize_ms) {
   g_prev = digitalRead(g_pirPin);
   g_windowActive = false;
   g_windowStart = 0;
-  g_latchedTimedOut = false;
+  g_latchedTimedOut = false; // latch for long presence event
   g_bootMs = millis();
   g_lastNotifyMs = 0;
 }

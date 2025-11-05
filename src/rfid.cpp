@@ -15,7 +15,7 @@ void RFIDReader::begin() {
   mfrc522.PCD_Init();
   Serial.println("RC522 initialized. Waiting for card...");
   loadUIDs();
-  Serial.print("Autorizadas carregadas: ");
+  Serial.print("Authorized tags: ");
   Serial.println(authorizedUIDs.size());
   pendingMsgV3 = String("Tags salvas: ") + authorizedUIDs.size();
 }
@@ -81,9 +81,9 @@ void RFIDReader::clearAllUIDs() {
 
   // exit enroll mode if active
   enrollMode = false;
-  h_latchedCancelEnrollEvent = true; // main vai desligar o V2
+  h_latchedCancelEnrollEvent = true; // main turns off enroll mode
 
-  // mensagem para o app (consumida no loop do main)
+  // message for the app consumed main loop
   pendingMsgV3 = "Todas as tags foram APAGADAS.";
 }
 
@@ -103,21 +103,21 @@ void RFIDReader::pool() {
 
   if (enrollMode) {
     if (uidExists(uid)) {
-      Serial.println("Tag ja cadastrada.");
+      Serial.println("Tag already registered.");
       pendingMsgV3 = "Tag já cadastrada: " + uid;
     } else {
       authorizedUIDs.push_back(uid);
       saveUIDs();
-      Serial.println("Nova tag cadastrada!");
+      Serial.println("New tag registered!");
       pendingMsgV3 = "Nova tag CADASTRADA: " + uid;
     }
-    // encerra janela após a primeira leitura útil
+    // ends time window after successful enrollment
     delay(1000); // wait a bit before canceling enrollment
     cancelEnroll();
     return;
   }
 
-  // uso normal: validação
+  // normal usage
   if (uidExists(uid)) {
     Serial.println("Authorized card detected. Unlocking door...");
     LockCtrl::cmdUnlock(millis());

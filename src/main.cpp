@@ -32,8 +32,8 @@ void setup() {
 
   // Lock controller
   LockCtrl::begin(
-    UNLOCK_FORGOT_MS, // Y
-    OPEN_DEBOUNCE_LOCK_MS                // debounce de abertura
+    UNLOCK_FORGOT_MS, // time to auto-lock if door not opened
+    OPEN_DEBOUNCE_LOCK_MS // debounce time for door open detection
   );
 
   Serial.print(F("[BOOT] Estado inicial: "));
@@ -71,7 +71,7 @@ void loop() {
   }
 
   if (LockCtrl::takeOpenTooLongEvent()) {
-    // Create an Event in Blynk (e.g., "porta_aberta_longo_tempo") in your template
+    // Create an Event in Blynk (e.g., "porta_aberta_longo_tempo")
     String msg = String("A porta ficou aberta por mais de ") + (OPEN_TOO_LONG_MS / 1000) + " segundos.";
     Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
   }

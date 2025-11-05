@@ -75,19 +75,19 @@ void poll(uint32_t now_ms) {
   }
 
   if (g_state == StateLock::UNLOCKED_WAIT_OPEN) {
-    bool magnet_close = HallSensor::isAboveThreshold();
+    bool magnetClose = HallSensor::isAboveThreshold();
 
     if (!inOpenDebounce) {
-      if (!magnet_close) {
+      if (!magnetClose) {
         inOpenDebounce = true;
         t_openDebounceStart = now_ms;
       }
     } else {
-      if (!magnet_close && elapsedSince(t_openDebounceStart, g_openDebounceMs)) {
+      if (!magnetClose && elapsedSince(t_openDebounceStart, g_openDebounceMs)) {
         goUnlocked();
         Serial.println(F("[LOCK] abertura confirmada"));
       }
-      if (magnet_close) inOpenDebounce = false;
+      if (magnetClose) inOpenDebounce = false;
     }
 
     if ((int32_t)(t_deadlineUnlockForgot - now_ms) <= 0) {

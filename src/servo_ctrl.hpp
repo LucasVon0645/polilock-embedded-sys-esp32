@@ -4,16 +4,16 @@
 
 namespace ServoCtrl {
 
-// Inicializa o servo motor
+// Initializes the servo controller
 void begin();
 
-// Movimenta o servo para posição de travado
+// Moves the servo to the locked position
 void lock();
 
-// Movimenta o servo para posição de destravado
+// Moves the servo to the unlocked position
 void unlock();
 
-// (Opcional) fornece referência para o objeto Servo, se for útil
+// (Optional) provides a reference to the Servo object, if useful
 Servo& instance();
 
 } // namespace ServoCtrl
