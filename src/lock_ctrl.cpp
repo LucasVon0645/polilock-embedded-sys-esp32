@@ -1,34 +1,34 @@
-// lock_ctrl.cpp
 #include "lock_ctrl.hpp"
 
 extern String pendingMsgV3;
 
-namespace LockCtrl {
-
 namespace {
-  StateLock     g_state = StateLock::LOCKED;
-  uint32_t  g_unlockForgotMs = UNLOCK_FORGOT_MS;
-  uint32_t  g_openDebounceMs = OPEN_DEBOUNCE_LOCK_MS;
-  uint32_t  t_openStart = 0;
+  // intern state
+  LockCtrl::StateLock g_state = LockCtrl::StateLock::LOCKED;
+
+  uint32_t g_unlockForgotMs = UNLOCK_FORGOT_MS;
+  uint32_t g_openDebounceMs = OPEN_DEBOUNCE_LOCK_MS;
+  uint32_t t_openStart = 0;
+
   bool h_latchedLockEvent = false;
   bool h_latchedUnlockEvent = false;
   bool h_latchedFailedLock = false;
   bool h_latchedOpenTooLong = false;
+
   bool trackingOpen = false;
   bool openMsgSent = false;
 
-  // timers
-  uint32_t  t_deadlineUnlockForgot = 0; // quando expira a janela Y
-  uint32_t  t_openDebounceStart    = 0; // início do debounce após queda do Hall
-  bool      inOpenDebounce         = false;
+  uint32_t t_deadlineUnlockForgot = 0;
+  uint32_t t_openDebounceStart = 0;
+  bool inOpenDebounce = false;
 
   inline bool elapsedSince(uint32_t start, uint32_t dt) {
-    return (uint32_t)(millis() - start) >= dt; // safe overflow
+    return (uint32_t)(millis() - start) >= dt;
   }
 
   void goLocked() {
-    SERVO_lock();
-    g_state = StateLock::LOCKED;
+    ServoCtrl::lock();
+    g_state = LockCtrl::StateLock::LOCKED;
     inOpenDebounce = false;
     trackingOpen = false;
     h_latchedLockEvent = true;
@@ -36,144 +36,104 @@ namespace {
   }
 
   void goUnlockedWaitOpen(uint32_t now_ms) {
-    SERVO_unlock();
-    g_state = StateLock::UNLOCKED_WAIT_OPEN;
+    ServoCtrl::unlock();
+    g_state = LockCtrl::StateLock::UNLOCKED_WAIT_OPEN;
     t_deadlineUnlockForgot = now_ms + g_unlockForgotMs;
     inOpenDebounce = false;
     trackingOpen = false;
     h_latchedUnlockEvent = true;
-    Serial.println(F("[LOCK] -> UNLOCKED_WAIT_OPEN (aguardando abertura)"));
+    Serial.println(F("[LOCK] -> UNLOCKED_WAIT_OPEN"));
   }
 
   void goUnlocked() {
-    // já está destrancado; apenas troca o estado lógico
-    g_state = StateLock::UNLOCKED;
+    g_state = LockCtrl::StateLock::UNLOCKED;
     inOpenDebounce = false;
     Serial.println(F("[LOCK] -> UNLOCKED"));
   }
 }
 
+namespace LockCtrl {
+
 void begin(uint32_t unlockForgotMs, uint32_t openDebounceMs) {
   g_unlockForgotMs = unlockForgotMs;
   g_openDebounceMs = openDebounceMs;
 
-  // Estado inicial a partir do Hall:
-  // - se o ímã está presente (acima do threshold), assumimos porta fechada -> trancado
-  // - se não, porta aberta -> destrancado
-  if (HALL_isAboveThreshold()) {
+  if (HallSensor::isAboveThreshold()) {
     goLocked();
   } else {
-    SERVO_unlock();
+    ServoCtrl::unlock();
     g_state = StateLock::UNLOCKED;
   }
 }
 
 void poll(uint32_t now_ms) {
-  // 1) evento de "porta voltou a fechar e ficou estável" (seu HALL_confirmed)
-  if (HALL_takeConfirmedEvent()) {
-    // Isso só interessa quando estamos destrancados:
+  if (HallSensor::takeConfirmedEvent()) {
     if (g_state == StateLock::UNLOCKED || g_state == StateLock::UNLOCKED_WAIT_OPEN) {
-      // Trancamento automático quando a porta fechou de novo
       goLocked();
-      // Serial.println(F("[LOCK] Trancamento automático após fechamento confirmado"));
       return;
     }
   }
 
-  // 2) detectar início de abertura (queda do Hall) com debounce
-  //    (somente enquanto aguardamos que a pessoa abra)
   if (g_state == StateLock::UNLOCKED_WAIT_OPEN) {
-    bool magnet_close = HALL_isAboveThreshold();
+    bool magnet_close = HallSensor::isAboveThreshold();
 
     if (!inOpenDebounce) {
-      // começamos a detectar abertura quando o sinal cai abaixo
       if (!magnet_close) {
         inOpenDebounce = true;
         t_openDebounceStart = now_ms;
-        // Serial.println(F("[LOCK] queda do Hall: iniciou debounce de abertura"));
       }
     } else {
-      // estamos no debounce; confirma "abriu" se continua abaixo por OPEN_DEBOUNCE_LOCK_MS
       if (!magnet_close && elapsedSince(t_openDebounceStart, g_openDebounceMs)) {
-        goUnlocked(); // cancelamos a janela Y
-        Serial.println(F("[LOCK] abertura confirmada: cancelado auto relock"));
+        goUnlocked();
+        Serial.println(F("[LOCK] abertura confirmada"));
       }
-      // se o sinal voltou a acima antes de vencer o debounce, zera o processo
-      if (magnet_close) {
-        inOpenDebounce = false;
-      }
+      if (magnet_close) inOpenDebounce = false;
     }
 
-    // prazo Y ainda não expirou? (comparação de tempo mais clara e segura contra overflow)
-    if ((int32_t)(t_deadlineUnlockForgot - now_ms) > 0) {
-      // ainda dentro da janela, então não expirou
-    } else {
-      // Expirou a janela
-      if (HALL_isAboveThreshold()) {
-        // Porta continuou fechada -> re-tranca
+    if ((int32_t)(t_deadlineUnlockForgot - now_ms) <= 0) {
+      if (HallSensor::isAboveThreshold()) {
         goLocked();
-        Serial.printf("[LOCK] Auto-relock: destrancou e não abriu em %d segundos\n", g_unlockForgotMs / 1000);
         pendingMsgV3 = "Auto-trancamento: a porta não foi aberta após destrancar.";
       } else {
-        // Porta já não está fechada; deixa destrancado
         goUnlocked();
       }
     }
   }
-  
-  // 3) Timeout: door kept OPEN for > OPEN_TOO_LONG_MS while UNLOCKED
-  if (g_state == StateLock::UNLOCKED) {
-    bool magnet_close = HALL_isAboveThreshold(); // true => door closed
 
+  if (g_state == StateLock::UNLOCKED) {
+    bool magnet_close = HallSensor::isAboveThreshold();
     if (!magnet_close) {
-      // Door is open: start or continue timing
       if (!trackingOpen) {
         trackingOpen = true;
         t_openStart = now_ms;
-        // Serial.println(F("[LOCK] open timing started"));
-      } else {
-        if (elapsedSince(t_openStart, OPEN_TOO_LONG_MS) && !openMsgSent) {
-          openMsgSent = true;
-          // One-shot latch (don’t spam while still open)
-          if (!h_latchedOpenTooLong) {
-            h_latchedOpenTooLong = true;
-            Serial.printf("[LOCK] Door open > %ds\n", OPEN_TOO_LONG_MS / 1000);
-            pendingMsgV3 = "Alerta: a porta ficou aberta por mais de " + String(OPEN_TOO_LONG_MS / 1000) + " segundos.";
-          }
-          // Keep trackingOpen true so we only re-arm once it closes.
+      } else if (elapsedSince(t_openStart, OPEN_TOO_LONG_MS) && !openMsgSent) {
+        openMsgSent = true;
+        if (!h_latchedOpenTooLong) {
+          h_latchedOpenTooLong = true;
+          pendingMsgV3 = "Alerta: a porta ficou aberta por mais de " + String(OPEN_TOO_LONG_MS / 1000) + " segundos.";
         }
       }
     } else {
-      // Door closed: reset open timing and allow a new future latch
       trackingOpen = false;
       openMsgSent = false;
-      // Do not clear the latched flag here; the consumer (main.cpp) will take it.
     }
   }
 }
 
 void cmdUnlock(uint32_t now_ms) {
-  // Se já está destrancado, apenas rearmar janela Y quando estiver aguardando abertura
-  if (g_state == StateLock::UNLOCKED) {
-    // nada a fazer (mantém destrancado)
-    return;
-  }
-  // Se já estava aguardando, apenas reinicia a janela Y
+  if (g_state == StateLock::UNLOCKED) return;
   if (g_state == StateLock::UNLOCKED_WAIT_OPEN) {
-    SERVO_unlock(); // idempotente
+    ServoCtrl::unlock();
     t_deadlineUnlockForgot = now_ms + g_unlockForgotMs;
     inOpenDebounce = false;
-    // Serial.println(F("[LOCK] Re-armed Y (novo comando de destrancar)"));
     return;
   }
-  // Se estava LOCKED
   goUnlockedWaitOpen(now_ms);
 }
 
 void cmdLock() {
   if (g_state == StateLock::LOCKED) return;
-
-  bool magnet_close = HALL_isAboveThreshold();
+  bool magnet_close = HallSensor::isAboveThreshold();
 
   if (magnet_close) {
     goLocked();
@@ -190,32 +150,14 @@ const __FlashStringHelper* stateName(StateLock s) {
     case StateLock::LOCKED:             return F("LOCKED");
     case StateLock::UNLOCKED_WAIT_OPEN: return F("UNLOCKED_WAIT_OPEN");
     case StateLock::UNLOCKED:           return F("UNLOCKED");
-    default:                        return F("?");
+    default:                            return F("?");
   }
 }
 
+// === events ===
+bool takeFailedLockEvent()  { bool v = h_latchedFailedLock;  h_latchedFailedLock = false;  return v; }
+bool takeLockEvent()        { bool v = h_latchedLockEvent;   h_latchedLockEvent = false;   return v; }
+bool takeUnlockEvent()      { bool v = h_latchedUnlockEvent; h_latchedUnlockEvent = false; return v; }
+bool takeOpenTooLongEvent() { bool v = h_latchedOpenTooLong; h_latchedOpenTooLong = false; return v; }
+
 } // namespace LockCtrl
-
-bool LOCK_takeFailedLockEvent() {
-  bool latched = LockCtrl::h_latchedFailedLock;
-  LockCtrl::h_latchedFailedLock = false;
-  return latched;
-}
-
-bool LOCK_takeLockEvent() {
-  bool latched = LockCtrl::h_latchedLockEvent;
-  LockCtrl::h_latchedLockEvent = false;
-  return latched;
-}
-
-bool LOCK_takeUnlockEvent() {
-  bool latched = LockCtrl::h_latchedUnlockEvent;
-  LockCtrl::h_latchedUnlockEvent = false;
-  return latched;
-}
-
-bool LOCK_takeOpenTooLongEvent() {
-  bool latched = LockCtrl::h_latchedOpenTooLong;
-  LockCtrl::h_latchedOpenTooLong = false;
-  return latched;
-}

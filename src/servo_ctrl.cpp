@@ -1,20 +1,31 @@
 #include "servo_ctrl.hpp"
-#include "config.h"
 #include <Arduino.h>
 
-// Define the global exactly once (NOT in main.cpp)
-Servo doorServo;
+namespace {
+  Servo doorServo; // instância privada
+}
 
-void setupServo() {
+namespace ServoCtrl {
+
+void begin() {
   doorServo.setPeriodHertz(50);
   doorServo.attach(SERVO_PIN, 900, 2100);
   doorServo.write(SERVO_MIN_ANGLE);
+  Serial.println(F("[SERVO] inicializado"));
 }
 
-void SERVO_lock() {
+void lock() {
   doorServo.write(SERVO_MIN_ANGLE);
+  Serial.println(F("[SERVO] lock() -> posição fechada"));
 }
 
-void SERVO_unlock() {
+void unlock() {
   doorServo.write(SERVO_MAX_ANGLE);
+  Serial.println(F("[SERVO] unlock() -> posição aberta"));
 }
+
+Servo& instance() {
+  return doorServo;
+}
+
+} // namespace ServoCtrl

@@ -1,7 +1,6 @@
 // rfid.cpp
 #include "secrets.h"
 #include "rfid.hpp"
-// Blynk apenas para feedback visual; sem macros BLYNK_WRITE aqui
 
 #define PREFS_NS   "rfid"
 #define PREFS_KEY  "uids"   // format: "UID1;UID2;UID3"
@@ -71,16 +70,16 @@ void RFIDReader::cancelEnroll() {
 }
 
 void RFIDReader::clearAllUIDs() {
-  // limpa memória em RAM
+  // cleans memory RAM
   authorizedUIDs.clear();
 
-  // limpa persistência
+  // cleans persistence
   if (prefs.begin(PREFS_NS, false)) {
     prefs.putString(PREFS_KEY, ""); // nada salvo
     prefs.end();
   }
 
-  // garante que não ficamos em modo cadastro
+  // exit enroll mode if active
   enrollMode = false;
   h_latchedCancelEnrollEvent = true; // main vai desligar o V2
 
@@ -89,7 +88,7 @@ void RFIDReader::clearAllUIDs() {
 }
 
 void RFIDReader::pool() {
-  // expira janela
+  // expire enroll mode if time elapsed
   if (enrollMode && millis() > enrollUntilMs) {
     cancelEnroll();
   }

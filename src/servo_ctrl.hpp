@@ -1,11 +1,19 @@
 #pragma once
 #include <ESP32Servo.h>
+#include "config.h"
 
-// Declare the servo for other files
-extern Servo doorServo;
+namespace ServoCtrl {
 
-// Init/utility
-void setupServo();
+// Inicializa o servo motor
+void begin();
 
-void SERVO_lock();
-void SERVO_unlock();
+// Movimenta o servo para posição de travado
+void lock();
+
+// Movimenta o servo para posição de destravado
+void unlock();
+
+// (Opcional) fornece referência para o objeto Servo, se for útil
+Servo& instance();
+
+} // namespace ServoCtrl

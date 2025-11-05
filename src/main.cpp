@@ -4,7 +4,8 @@
 #include <WiFi.h>
 #include <BlynkSimpleEsp32.h>
 #include "servo_ctrl.hpp"
-#include "sensors.hpp"
+#include "pir_sensor.hpp"
+#include "hall_sensor.hpp"
 #include "lock_ctrl.hpp"
 #include "blynk.hpp"
 #include "rfid.hpp"
@@ -17,7 +18,7 @@ void setup() {
   Serial.begin(115200);
   delay(100);
 
-  setupServo();
+  ServoCtrl::begin();
 
   Serial.println("Connecting to Blynk...");
   Blynk.begin(BLYNK_AUTH_TOKEN, WIFI_SSID, WIFI_PASS);
@@ -25,11 +26,9 @@ void setup() {
   // Correct initial states on startup
   Blynk.virtualWrite(V2, 0); // Update RFID to read mode
 
-  // PIR: pino do config.h, timeout = 5000ms, estabilização = 15000ms
-  PIR_begin(PIR_PIN, 5000, 15000);
+  PIRSensor::begin(PIR_PIN, 5000, 15000);
 
-  // Hall: usa defaults de config.h, mas pode ajustar depois com setters
-  HALL_begin(HALL_PIN, HALL_THRESHOLD, HALL_CONFIRM_SECONDS * 1000UL);
+  HallSensor::begin(HALL_PIN, HALL_THRESHOLD, HALL_CONFIRM_SECONDS * 1000UL);
 
   // Lock controller
   LockCtrl::begin(
@@ -51,27 +50,27 @@ void loop() {
 
   // --- PIR ---
   // Non-blocking polling of PIR
-  PirEvent pir_event = PIR_poll(millis());
+  PIRSensor::poll(millis());
 
   // Send notification to Blynk for PIR TimedOut event
-  if (PIR_takeTimedOutEvent()) {
+  if (PIRSensor::takeTimedOutEvent()) {
     Serial.println("[PIR] TimedOut event taken: presence confirmed.");
     Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
   }
 
-  if (LOCK_takeLockEvent()) {
+  if (LockCtrl::takeLockEvent()) {
     Blynk.virtualWrite(V1, V_LOCKED); // Update V1 to locked
   }
-  if (LOCK_takeUnlockEvent()) {
+  if (LockCtrl::takeUnlockEvent()) {
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 to unlocked
   }
 
-  if (LOCK_takeFailedLockEvent()) {
+  if (LockCtrl::takeFailedLockEvent()) {
     Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento não foi possível.");
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 
-  if (LOCK_takeOpenTooLongEvent()) {
+  if (LockCtrl::takeOpenTooLongEvent()) {
     // Create an Event in Blynk (e.g., "porta_aberta_longo_tempo") in your template
     String msg = String("A porta ficou aberta por mais de ") + (OPEN_TOO_LONG_MS / 1000) + " segundos.";
     Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
@@ -88,16 +87,16 @@ void loop() {
 
   // --- Hall ---
   // Non-blocking polling of Hall sensor
-  HallEvent hall_event = HALL_poll(millis());
+  HallSensor::Event hall_event = HallSensor::poll(millis());
 
   // Log Hall events (debug)
-  if (hall_event == HallEvent::Rising) Serial.println("[Hall] rising: start time window.");
-  if (hall_event == HallEvent::Canceled) Serial.println("[HALL] falling before timeout: canceled.");
-  if (hall_event == HallEvent::Confirmed) {
+  if (hall_event == HallSensor::Event::Rising) Serial.println("[Hall] rising: start time window.");
+  if (hall_event == HallSensor::Event::Canceled) Serial.println("[HALL] falling before timeout: canceled.");
+  if (hall_event == HallSensor::Event::Confirmed) {
     Serial.print("[HALL] Confirmed: after ");
     Serial.print(HALL_CONFIRM_SECONDS);
     Serial.print("s. raw=");
-    Serial.print(HALL_lastRaw());
+    Serial.print(HallSensor::lastRaw());
     Serial.print(" (threshold=");
     Serial.print(HALL_THRESHOLD);
     Serial.println(")");
@@ -119,7 +118,7 @@ BLYNK_WRITE(V2) { onV2Write(param, rfid); }
 
 // V3 is just for status messages from RFID logic; no BLYNK_WRITE needed
 
-// button to clear all UIDs in V4
+// button to clear all UID
 BLYNK_WRITE(V4) { onV4Write(param, rfid); }
 
 BLYNK_CONNECTED() {
