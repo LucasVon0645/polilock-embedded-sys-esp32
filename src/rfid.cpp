@@ -1,5 +1,10 @@
+// rfid.cpp
 #include "rfid.hpp"
-#define AUTHORIZED_RFID_UID "72EE856C"
+// Blynk apenas para feedback visual; sem macros BLYNK_WRITE aqui
+#include <BlynkSimpleEsp32.h>
+
+#define PREFS_NS   "rfid"
+#define PREFS_KEY  "uids"   // formato: "UID1;UID2;UID3"
 
 RFIDReader::RFIDReader(uint8_t ssPin, uint8_t rstPin)
   : mfrc522(ssPin, rstPin) {}
@@ -8,26 +13,108 @@ void RFIDReader::begin() {
   SPI.begin();
   mfrc522.PCD_Init();
   Serial.println("RC522 initialized. Waiting for card...");
+  loadUIDs();
+  Serial.print("Autorizadas carregadas: ");
+  Serial.println(authorizedUIDs.size());
+  // feedback inicial no Blynk (opcional)
+  Blynk.virtualWrite(V3, String("Tags salvas: ") + authorizedUIDs.size());
+}
+
+void RFIDReader::loadUIDs() {
+  authorizedUIDs.clear();
+  if (!prefs.begin(PREFS_NS, true)) return;
+  String all = prefs.getString(PREFS_KEY, "");
+  prefs.end();
+
+  int start = 0;
+  while (start >= 0) {
+    int sep = all.indexOf(';', start);
+    String token = (sep >= 0) ? all.substring(start, sep) : all.substring(start);
+    token.trim();
+    if (token.length() > 0) authorizedUIDs.push_back(token);
+    if (sep < 0) break;
+    start = sep + 1;
+  }
+}
+
+void RFIDReader::saveUIDs() {
+  String all = "";
+  for (size_t i = 0; i < authorizedUIDs.size(); i++) {
+    all += authorizedUIDs[i];
+    if (i + 1 < authorizedUIDs.size()) all += ';';
+  }
+  if (!prefs.begin(PREFS_NS, false)) return;
+  prefs.putString(PREFS_KEY, all);
+  prefs.end();
+  Blynk.virtualWrite(V3, String("Tags salvas: ") + authorizedUIDs.size());
+}
+
+bool RFIDReader::uidExists(const String& uid) const {
+  for (auto& u : authorizedUIDs) {
+    if (u.equalsIgnoreCase(uid)) return true;
+  }
+  return false;
+}
+
+void RFIDReader::startEnroll(uint32_t windowMs) {
+  enrollMode = true;
+  enrollUntilMs = millis() + windowMs;
+  Serial.println("[RFID] Modo cadastro ATIVO.");
+  Blynk.virtualWrite(V3, "Modo cadastro ATIVO. Aproxime a nova tag.");
+}
+
+void RFIDReader::cancelEnroll() {
+  enrollMode = false;
+  Serial.println("[RFID] Modo cadastro DESATIVADO.");
+  Blynk.virtualWrite(V3, "Modo cadastro DESATIVADO.");
 }
 
 void RFIDReader::pool() {
-  if (isCardPresent()) {
-    String uid = readCardUID();
-    Serial.print("Card UID: ");
-    Serial.println(uid);
+  // expira janela
+  if (enrollMode && millis() > enrollUntilMs) {
+    cancelEnroll();
+    // desliga botão no app
+    Blynk.virtualWrite(V2, 0);
+  }
 
-    if(uid == AUTHORIZED_RFID_UID) {
-      Serial.println("Authorized card detected. Unlocking door...");
-      LockCtrl::cmdUnlock(millis());
+  if (!isCardPresent()) return;
+
+  String uid = readCardUID();
+  if (uid.isEmpty()) return;
+
+  Serial.print("Card UID: ");
+  Serial.println(uid);
+
+  if (enrollMode) {
+    if (uidExists(uid)) {
+      Serial.println("Tag ja cadastrada.");
+      Blynk.virtualWrite(V3, "Tag já cadastrada: " + uid);
     } else {
-      Serial.println("Unauthorized card.");
+      authorizedUIDs.push_back(uid);
+      saveUIDs();
+      Serial.println("Nova tag cadastrada!");
+      Blynk.virtualWrite(V3, "Nova tag CADASTRADA: " + uid);
     }
+    // encerra janela após a primeira leitura útil
+    cancelEnroll();
+    Blynk.virtualWrite(V2, 0);
+    return;
+  }
+
+  // uso normal: validação
+  if (uidExists(uid)) {
+    Serial.println("Authorized card detected. Unlocking door...");
+    LockCtrl::cmdUnlock(millis());
+    Blynk.virtualWrite(V3, "Acesso liberado: " + uid);
+  } else {
+    Serial.println("Unauthorized card.");
+    Blynk.virtualWrite(V3, "Acesso NEGADO: " + uid);
   }
 }
 
 bool RFIDReader::isCardPresent() {
   if (!mfrc522.PICC_IsNewCardPresent()) return false;
-  if (!mfrc522.PICC_ReadCardSerial()) return false;
+  if (!mfrc522.PICC_ReadCardSerial())   return false;
   return true;
 }
 

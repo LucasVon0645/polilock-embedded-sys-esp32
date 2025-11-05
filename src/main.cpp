@@ -114,6 +114,16 @@ void loop() {
 // Keep the BLYNK_WRITE macros in the same TU that includes BlynkSimpleEsp32.h
 BLYNK_WRITE(V1) { onV1Write(param); }
 
+// ---- NOVO: botão para cadastro em V2 ----
+BLYNK_WRITE(V2) {
+  int state = param.asInt(); // 1=ligado, 0=desligado
+  if (state == 1) {
+    rfid.startEnroll(15000); // janela de 15s (ajuste à vontade)
+  } else {
+    rfid.cancelEnroll();
+  }
+}
+
 BLYNK_CONNECTED() {
   // Pull the last V1 value from the server; this will call BLYNK_WRITE(V1)
   Blynk.syncVirtual(V1);
