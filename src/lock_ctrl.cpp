@@ -13,6 +13,7 @@ namespace {
   bool h_latchedFailedLock = false;
   bool h_latchedOpenTooLong = false;
   bool trackingOpen = false;
+  bool openMsgSent = false;
 
   // timers
   uint32_t  t_deadlineUnlockForgot = 0; // quando expira a janela Y
@@ -93,7 +94,7 @@ void poll(uint32_t now_ms) {
       // estamos no debounce; confirma "abriu" se continua abaixo por OPEN_DEBOUNCE_LOCK_MS
       if (!magnet_close && elapsedSince(t_openDebounceStart, g_openDebounceMs)) {
         goUnlocked(); // cancelamos a janela Y
-        Serial.println(F("[LOCK] abertura confirmada: cancelado auto-relock Y"));
+        Serial.println(F("[LOCK] abertura confirmada: cancelado auto relock"));
       }
       // se o sinal voltou a acima antes de vencer o debounce, zera o processo
       if (magnet_close) {
@@ -128,7 +129,8 @@ void poll(uint32_t now_ms) {
         t_openStart = now_ms;
         // Serial.println(F("[LOCK] open timing started"));
       } else {
-        if (elapsedSince(t_openStart, OPEN_TOO_LONG_MS)) {
+        if (elapsedSince(t_openStart, OPEN_TOO_LONG_MS) && !openMsgSent) {
+          openMsgSent = true;
           // One-shot latch (don’t spam while still open)
           if (!h_latchedOpenTooLong) {
             h_latchedOpenTooLong = true;
@@ -140,6 +142,7 @@ void poll(uint32_t now_ms) {
     } else {
       // Door closed: reset open timing and allow a new future latch
       trackingOpen = false;
+      openMsgSent = false;
       // Do not clear the latched flag here; the consumer (main.cpp) will take it.
     }
   }

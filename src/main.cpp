@@ -54,7 +54,7 @@ void loop() {
 
   // Send notification to Blynk for PIR TimedOut event
   if (PIR_takeTimedOutEvent()) {
-    // Blynk IoT (novo): crie no dashboard o Event "presenca_prolongada"
+    Serial.println("[PIR] TimedOut event taken: presence confirmed.");
     Blynk.logEvent("presenca_prolongada", "Presença manteve-se por mais que o limite.");
   }
 
@@ -66,7 +66,7 @@ void loop() {
   }
 
   if (LOCK_takeFailedLockEvent()) {
-    Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento nao foi possível.");
+    Blynk.logEvent("trancamento_falho", "Porta está aberta. Trancamento não foi possível.");
     Blynk.virtualWrite(V1, V_UNLOCKED); // Update V1 back to unlocked
   }
 
@@ -107,11 +107,7 @@ void loop() {
   //   Serial.println(PIR_isHigh() ? "HIGH" : "low");
   // }
 
-  if (rfid.isCardPresent()) {
-    String uid = rfid.readCardUID();
-    Serial.print("Card UID: ");
-    Serial.println(uid);
-  }
+  rfid.pool();
 
 }
 

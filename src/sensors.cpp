@@ -8,10 +8,11 @@ namespace {
 
   bool     g_prev = false;           // estado anterior (LOW/HIGH)
   bool     g_windowActive = false;   // janela aberta após subida?
-  bool     g_notified = false;       // já sinalizou TimedOut nessa janela?
   uint32_t g_windowStart = 0;        // início da janela (millis)
   uint32_t g_bootMs = 0;             // marca do boot para fase de estabilização
-
+  
+  uint32_t g_notifyCooldownMs = 5UL * 60UL * 1000UL; // 5 minutos
+  uint32_t g_lastNotifyMs     = 0;                   // instante da última notificação
   bool     g_latchedTimedOut = false; // “latch” para o main consumir (uma vez)
 }
 
@@ -24,15 +25,17 @@ void PIR_begin(uint8_t pin, uint32_t timeout_ms, uint32_t stabilize_ms) {
   pinMode(g_pirPin, INPUT_PULLDOWN);   // a maioria dos pinos do ESP32 tem pulldown
   g_prev = digitalRead(g_pirPin);
   g_windowActive = false;
-  g_notified = false;
   g_windowStart = 0;
   g_latchedTimedOut = false;
   g_bootMs = millis();                 // início do período de estabilização
+  g_lastNotifyMs = 0;                  // recomeça janela de cooldown no boot
 }
 
 void PIR_setTimeout(uint32_t timeout_ms) { g_timeoutMs = timeout_ms; }
 
 bool PIR_isHigh() { return digitalRead(g_pirPin); }
+
+void PIR_setNotifyCooldown(uint32_t cooldown_ms) { g_notifyCooldownMs = cooldown_ms; }
 
 PirEvent PIR_poll(uint32_t now_ms) {
   // Ignora leituras durante a estabilização do PIR após energizar
@@ -46,7 +49,6 @@ PirEvent PIR_poll(uint32_t now_ms) {
   // Detecta borda de subida (LOW -> HIGH)
   if (!g_prev && cur) {
     g_windowActive = true;
-    g_notified = false;
     g_windowStart = now_ms;
     g_prev = cur;
     return PirEvent::Rising;
@@ -56,19 +58,21 @@ PirEvent PIR_poll(uint32_t now_ms) {
   if (g_windowActive) {
     uint32_t elapsed = now_ms - g_windowStart;
 
-    // Timeout atingido e sinal segue HIGH -> evento válido
-    if (!g_notified && elapsed >= g_timeoutMs && cur) {
-      g_notified = true;
-      g_latchedTimedOut = true;   // o main consome via PIR_takeTimedOutEvent()
-      // Mantém janela aberta até cair para LOW para só rearmar no próximo ciclo
-      g_prev = cur;
-      return PirEvent::TimedOut;
+    // Se o sinal permanece HIGH e já passou do timeout, podemos notificar
+    if (cur && elapsed >= g_timeoutMs) {
+      // aplica rate limit de 5 min (ou valor configurado)
+      if ((g_lastNotifyMs == 0) || (uint32_t)(now_ms - g_lastNotifyMs) >= g_notifyCooldownMs) {
+        g_latchedTimedOut = true;   // o main consome via PIR_takeTimedOutEvent()
+        g_lastNotifyMs = now_ms;    // abre nova janela de 5 min
+        g_prev = cur;
+        return PirEvent::TimedOut;
+      }
+      // Se ainda está em cooldown, não notifica ainda; mantém janela ativa.
     }
 
     // Descida antes do timeout -> cancela janela sem evento
     if (!cur) {
       g_windowActive = false;
-      g_notified = false;
       g_prev = cur;
       return PirEvent::Canceled;
     }
