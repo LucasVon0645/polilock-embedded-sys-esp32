@@ -11,6 +11,8 @@
 
 RFIDReader rfid(RFID_SS_PIN, RFID_RST_PIN);
 
+String pendingMsgV3 = "";
+
 void setup() {
   Serial.begin(115200);
   delay(100);
@@ -78,6 +80,11 @@ void loop() {
 
   if (rfid.RFID_takeCancelEnrollEvent()) {
     Blynk.virtualWrite(V2, 0); // Update V2 button to off
+  }
+
+  if (pendingMsgV3.length() > 0) {
+    Blynk.virtualWrite(V3, pendingMsgV3);
+    pendingMsgV3 = ""; // clear after sending
   }
 
   // --- Hall ---
