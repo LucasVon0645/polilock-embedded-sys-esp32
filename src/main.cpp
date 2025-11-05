@@ -76,6 +76,10 @@ void loop() {
     Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
   }
 
+  if (rfid.RFID_takeCancelEnrollEvent()) {
+    Blynk.virtualWrite(V2, 0); // Update V2 button to off
+  }
+
   // --- Hall ---
   // Non-blocking polling of Hall sensor
   HallEvent hall_event = HALL_poll(millis());

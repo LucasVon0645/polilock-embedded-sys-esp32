@@ -2,6 +2,7 @@
 #ifndef RFID_HPP
 #define RFID_HPP
 
+#include "config.h"
 #include <Arduino.h>
 #include <SPI.h>
 #include <MFRC522.h>
@@ -9,34 +10,42 @@
 #include <vector>
 #include "lock_ctrl.hpp"
 
+#include <BlynkSimpleEsp32.h>
+extern BlynkWifi Blynk;
+
+
 class RFIDReader {
 public:
   RFIDReader(uint8_t ssPin, uint8_t rstPin);
   void begin();
   void pool();
 
-  // ---- novas APIs ----
-  void startEnroll(uint32_t windowMs = 15000); // inicia modo cadastro por X ms
-  void cancelEnroll();                          // cancela/fecha janela
+  void startEnroll(uint32_t windowMs = ENROLL_WINDOW_MS); // start enrollment mode for windowMs milliseconds
+  void cancelEnroll();                          // cancel enrollment mode
   size_t authorizedCount() const { return authorizedUIDs.size(); }
+
+  bool RFID_takeCancelEnrollEvent(); // returns true if in enroll mode, and cancels it
 
 private:
   MFRC522 mfrc522;
 
-  // ---- storage/lista ----
+  // ---- storage ----
   Preferences prefs;
   std::vector<String> authorizedUIDs;
   void loadUIDs();
   void saveUIDs();
   bool uidExists(const String& uid) const;
 
-  // ---- leitura RFID ----
+  // ---- RFID reading ----
   bool isCardPresent();
   String readCardUID();
 
-  // ---- modo cadastro ----
+  // ---- enrollment mode ----
   bool enrollMode = false;
   uint32_t enrollUntilMs = 0;
+
+  // ---- event latches ----
+  bool h_latchedCancelEnrollEvent = false;
 };
 
 #endif

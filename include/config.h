@@ -17,17 +17,18 @@
 #define RFID_RST_PIN 22
 
 // === Timings ===
-// Tempo de confirmação em segundos (após borda de subida)
+// Confirmation time in seconds (after rising edge)
 #define HALL_CONFIRM_SECONDS  3
-#define UNLOCK_FORGOT_MS      10000  // 10 segundos
+#define UNLOCK_FORGOT_MS      10000  // 10 seconds
 #define OPEN_DEBOUNCE_LOCK_MS 200
 #define RFID_POLL_MS          100
 #define OPEN_TOO_LONG_MS      30000   // 30 seconds
+#define ENROLL_WINDOW_MS     15000   // 15 seconds
 
 // === Servo ===
 #define SERVO_MIN_ANGLE     0
 #define SERVO_MAX_ANGLE    180
 
 // === Hall Sensor ===
-// Limiar (0–4095 no ADC de 12 bits do ESP32, por padrão)
+// Threshold (0–4095 in the 12-bit ADC of the ESP32, by default)
 #define HALL_THRESHOLD 2500
