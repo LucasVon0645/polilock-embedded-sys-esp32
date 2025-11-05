@@ -11,3 +11,12 @@ void onV1Write(const BlynkParam& param) {
     Serial.println(F("[CMD] lock 🔒"));
   }
 }
+
+void onV2Write(const BlynkParam& param, RFIDReader& rfid) {
+  int state = param.asInt(); // 1=ligado, 0=desligado
+  if (state == 1) {
+    rfid.startEnroll(15000); // janela de 15s (ajuste à vontade)
+  } else {
+    rfid.cancelEnroll();
+  }
+}

@@ -10,9 +10,6 @@
 #include <vector>
 #include "lock_ctrl.hpp"
 
-#include <BlynkSimpleEsp32.h>
-extern BlynkWifi Blynk;
-
 
 class RFIDReader {
 public:
