@@ -4,7 +4,7 @@
 // Blynk apenas para feedback visual; sem macros BLYNK_WRITE aqui
 
 #define PREFS_NS   "rfid"
-#define PREFS_KEY  "uids"   // formato: "UID1;UID2;UID3"
+#define PREFS_KEY  "uids"   // format: "UID1;UID2;UID3"
 
 extern String pendingMsgV3;
 

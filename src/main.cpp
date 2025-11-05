@@ -53,11 +53,6 @@ void loop() {
   // Non-blocking polling of PIR
   PirEvent pir_event = PIR_poll(millis());
 
-  // Log PIR events (debug)
-  // if (pir_event == PirEvent::Rising)   Serial.println("[PIR] rising: start time window");
-  // if (pir_event == PirEvent::Canceled) Serial.println("[PIR] falling before timeout: canceled");
-  // if (pir_event == PirEvent::TimedOut) Serial.println("[PIR] timeout with HIGH: valid event");
-
   // Send notification to Blynk for PIR TimedOut event
   if (PIR_takeTimedOutEvent()) {
     Serial.println("[PIR] TimedOut event taken: presence confirmed.");
@@ -110,28 +105,21 @@ void loop() {
 
   LockCtrl::poll(millis());
 
-  // (opcional) telemetria leve
-  // static uint32_t lastPrint = 0;
-  // if (millis() - lastPrint >= 500) {
-  //   lastPrint = millis();
-  //   Serial.print("HALL raw=");
-  //   Serial.print(HALL_lastRaw());
-  //   Serial.print(" above=");
-  //   Serial.print(HALL_isAboveThreshold() ? "YES" : "no");
-  //   Serial.print(" | PIR=");
-  //   Serial.println(PIR_isHigh() ? "HIGH" : "low");
-  // }
-
   rfid.pool();
 
 }
 
 // Keep the BLYNK_WRITE macros in the same TU that includes BlynkSimpleEsp32.h
+
+// button for lock/unlock in V1
 BLYNK_WRITE(V1) { onV1Write(param); }
 
-// ---- NOVO: botão para cadastro em V2 ----
+// button for enrollment in V2
 BLYNK_WRITE(V2) { onV2Write(param, rfid); }
 
+// V3 is just for status messages from RFID logic; no BLYNK_WRITE needed
+
+// button to clear all UIDs in V4
 BLYNK_WRITE(V4) { onV4Write(param, rfid); }
 
 BLYNK_CONNECTED() {
