@@ -148,7 +148,7 @@ String RFIDReader::readCardUID() {
   return uid;
 }
 
-bool RFIDReader::RFID_takeCancelEnrollEvent() {
+bool RFIDReader::takeCancelEnrollEvent() {
   bool latched = h_latchedCancelEnrollEvent;
   h_latchedCancelEnrollEvent = false;
   return latched;

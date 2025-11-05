@@ -22,7 +22,7 @@ public:
   void clearAllUIDs();                                    // clear all authorized UIDs
   size_t authorizedCount() const { return authorizedUIDs.size(); }
 
-  bool RFID_takeCancelEnrollEvent(); // returns true if in enroll mode, and cancels it
+  bool takeCancelEnrollEvent(); // returns true if in enroll mode, and cancels it
 
 private:
   MFRC522 mfrc522;

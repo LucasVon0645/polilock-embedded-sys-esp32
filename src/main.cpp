@@ -76,7 +76,7 @@ void loop() {
     Blynk.logEvent("porta_aberta_longo_tempo", msg.c_str());
   }
 
-  if (rfid.RFID_takeCancelEnrollEvent()) {
+  if (rfid.takeCancelEnrollEvent()) {
     Blynk.virtualWrite(V2, 0); // Update V2 button to off
   }
 
