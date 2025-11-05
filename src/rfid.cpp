@@ -68,7 +68,6 @@ void RFIDReader::cancelEnroll() {
   enrollMode = false;
   Serial.println("[RFID] Modo cadastro DESATIVADO.");
   h_latchedCancelEnrollEvent = true;
-  pendingMsgV3 = "Modo cadastro DESATIVADO.";
 }
 
 void RFIDReader::clearAllUIDs() {

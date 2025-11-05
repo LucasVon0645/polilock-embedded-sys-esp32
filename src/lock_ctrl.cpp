@@ -1,6 +1,8 @@
 // lock_ctrl.cpp
 #include "lock_ctrl.hpp"
 
+extern String pendingMsgV3;
+
 namespace LockCtrl {
 
 namespace {
@@ -111,6 +113,7 @@ void poll(uint32_t now_ms) {
         // Porta continuou fechada -> re-tranca
         goLocked();
         Serial.printf("[LOCK] Auto-relock: destrancou e não abriu em %d segundos\n", g_unlockForgotMs / 1000);
+        pendingMsgV3 = "Auto-trancamento: a porta não foi aberta após destrancar.";
       } else {
         // Porta já não está fechada; deixa destrancado
         goUnlocked();
@@ -135,6 +138,7 @@ void poll(uint32_t now_ms) {
           if (!h_latchedOpenTooLong) {
             h_latchedOpenTooLong = true;
             Serial.printf("[LOCK] Door open > %ds\n", OPEN_TOO_LONG_MS / 1000);
+            pendingMsgV3 = "Alerta: a porta ficou aberta por mais de " + String(OPEN_TOO_LONG_MS / 1000) + " segundos.";
           }
           // Keep trackingOpen true so we only re-arm once it closes.
         }
@@ -175,6 +179,7 @@ void cmdLock() {
     goLocked();
   } else {
     h_latchedFailedLock = true;
+    pendingMsgV3 = "Falha ao trancar: a porta está aberta.";
   }
 }
 

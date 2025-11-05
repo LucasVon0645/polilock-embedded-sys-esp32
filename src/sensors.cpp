@@ -1,5 +1,7 @@
 #include "sensors.hpp"
 
+extern String pendingMsgV3;
+
 // Estado interno (arquivo-local)
 namespace {
   uint8_t  g_pirPin = PIR_PIN;
@@ -65,6 +67,7 @@ PirEvent PIR_poll(uint32_t now_ms) {
         g_latchedTimedOut = true;   // o main consome via PIR_takeTimedOutEvent()
         g_lastNotifyMs = now_ms;    // abre nova janela de 5 min
         g_prev = cur;
+        pendingMsgV3 = "Alerta: presença detectada por mais de " + String(g_timeoutMs / 1000) + " segundos.";
         return PirEvent::TimedOut;
       }
       // Se ainda está em cooldown, não notifica ainda; mantém janela ativa.
