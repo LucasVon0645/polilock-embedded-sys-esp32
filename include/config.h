@@ -31,4 +31,4 @@
 
 // === Hall Sensor ===
 // Threshold (0–4095 in the 12-bit ADC of the ESP32, by default)
-#define HALL_THRESHOLD 2000
+#define HALL_THRESHOLD 2100
