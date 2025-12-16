@@ -91,6 +91,7 @@ void RFIDReader::pool() {
   // expire enroll mode if time elapsed
   if (enrollMode && millis() > enrollUntilMs) {
     cancelEnroll();
+    pendingMsgV3 = "Cadastro cancelado - 15 segundos sem cadastro";
   }
 
   if (!isCardPresent()) return;
@@ -148,7 +149,7 @@ String RFIDReader::readCardUID() {
   return uid;
 }
 
-bool RFIDReader::RFID_takeCancelEnrollEvent() {
+bool RFIDReader::takeCancelEnrollEvent() {
   bool latched = h_latchedCancelEnrollEvent;
   h_latchedCancelEnrollEvent = false;
   return latched;
