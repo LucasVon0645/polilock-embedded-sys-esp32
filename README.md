@@ -9,17 +9,17 @@ This firmware implements an access control system:
 - **Connectivity**: Wi-Fi + Blynk (Virtual Pins over MQTT)
 - **Architecture**: Hardware drivers → Services → Application (FSM) → User interface
 
-## System Diagram
+## System Architecture
 
 ![System Diagram](docs/sys_high_level_arch.png)
 
+## Software Architecture
+![System Diagram](docs/diagram_classes.jpg)
 
-## Hardware (suggested pins)
-- **RFID MFRC522 (SPI)**: SS=GPIO5, RST=GPIO22, SCK=GPIO18, MOSI=GPIO23, MISO=GPIO19, 3V3, GND  
-- **Servo**: GPIO17  
-- **PIR**: GPIO27  
-- **Hall**: GPIO26 (digital) *or* ADC (e.g., GPIO34) if analog  
-> Power MFRC522 with **3.3V**. Servo requires 5V (separate supply, common GND).
+
+## Hardware
+![Hardware Diagram](docs/circuit.png)
+
 
 ## Blynk (Virtual Pins)
 - **V0**: Slider → Servo angle (0–180°)  
